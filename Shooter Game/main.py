@@ -9,3 +9,14 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Random Shooter Game")
 
 running = True
+
+x = 200
+y = 200
+
+
+while running:
+    for event in pygame.event.get(): # quit the game
+        if event.type == pygame.QUIT:
+            running = False
+
+pygame.quit()
