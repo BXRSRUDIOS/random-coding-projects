@@ -15,7 +15,7 @@ moving_left = False
 moving_right = False
 
 # Initialise background
-BG = (144, 201, 120)
+BG = (0, 0, 0)
 RED = (255, 0, 0)
 screen.fill(BG)
 
@@ -23,8 +23,11 @@ screen.fill(BG)
 clock = pygame.time.Clock()
 FPS = 60
 
+# Images
+bullet_img = pygame.image.load("Shooter Game/Other Assets/bullet.png")
+
 # Initalise Example Players & Characters
-player = classes.Entity(250, 250, 3, 2, "player")
+player = classes.Entity(250, 250, 3, 3, "player")
 #enemy = classes.Entity(300, 400, 0.05, 2, "enemy")
 running = True
 

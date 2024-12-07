@@ -33,7 +33,7 @@ class Entity(pygame.sprite.Sprite):
             temp_list = []
             num_frames = len(os.listdir(f"Shooter Game/{self.char_type}/{animation}"))
             for i in range(1, num_frames+1):
-                img = pygame.image.load(f"Shooter Game/{self.char_type}/{animation}/{i}.png")
+                img = pygame.image.load(f"Shooter Game/{self.char_type}/{animation}/{i}.png").convert_alpha()
                 img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_width() * scale)))
                 temp_list.append(img)
             self.animation_list.append(temp_list)
