@@ -23,7 +23,7 @@ clock = pygame.time.Clock()
 FPS = 60
 
 # Initalise Example Players & Characters
-player = classes.Entity(250, 250, 2, 2, "player", 2)
+player = classes.Entity(250, 250, 2, 2, "player", 8)
 enemy = classes.Entity(300, 400, 0.05, 2, "enemy", 1)
 running = True
 
