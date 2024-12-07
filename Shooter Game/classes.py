@@ -27,7 +27,7 @@ class Entity(pygame.sprite.Sprite):
         self.update_time = pygame.time.get_ticks()
         
         # Loading Images - All Images for Players
-        animation_types = ["Idle", "Run", "Jump"]
+        animation_types = ["Idle", "Run", "Jump", "Shoot Idle", "Shoot Move"]
         for animation in animation_types:
             # Reset temp list of imgs
             temp_list = []
@@ -104,3 +104,14 @@ class Entity(pygame.sprite.Sprite):
         # Just draw the image so I don't have to repeat this line of code
         self.update_animation()
         screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, bullet_img, x, y, direction):
+        # Attributes
+
+        super().__init__()
+        self.image = bullet_img
+        self.velocity = 10
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.direction = direction
