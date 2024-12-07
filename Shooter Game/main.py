@@ -1,5 +1,5 @@
 import pygame
-
+import classes
 pygame.init()
 
 SCREEN_WIDTH = 800
@@ -10,13 +10,22 @@ pygame.display.set_caption("Random Shooter Game")
 
 running = True
 
-x = 200
-y = 200
 
+# Initialise player boilerplate code
+x = 250
+y = 250
+scale = 0.125/2
+
+player = classes.Entity(x, y, scale)
 
 while running:
+
+    player.draw()
+
     for event in pygame.event.get(): # quit the game
         if event.type == pygame.QUIT:
             running = False
+
+    pygame.display.update()
 
 pygame.quit()
