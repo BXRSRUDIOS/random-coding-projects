@@ -22,13 +22,11 @@ screen.fill(BG)
 clock = pygame.time.Clock()
 FPS = 60
 
-# Initialise player boilerplate code
-x = 250
-y = 250
-scale = 0.125/2
-
-player = classes.Entity(x, y, scale, 2, "player")
+# Initalise Example Players & Characters
+player = classes.Entity(250, 250, 2, 2, "player", 2)
+enemy = classes.Entity(300, 400, 0.05, 2, "enemy", 1)
 running = True
+
 while running:
 
     clock.tick(FPS)
@@ -36,6 +34,8 @@ while running:
     screen.fill(BG)
 
     player.draw()
+    enemy.draw()
+
     player.move(moving_left, moving_right)
 
     for event in pygame.event.get():
