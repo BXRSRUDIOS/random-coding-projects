@@ -18,8 +18,11 @@ grenade = False
 grenade_thrown = False
 
 # Initialise background
-BG = (0, 0, 0)
+BG = (144, 44, 120)
 RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
 screen.fill(BG)
 
 # Game FPS for Game Loop
@@ -29,14 +32,38 @@ FPS = 60
 # Images
 bullet_img = pygame.image.load("Shooter Game/Other Assets/bullet.png").convert_alpha()
 grenade_img = pygame.image.load("Shooter Game/Other Assets/grenade.png").convert_alpha()
+health_box_img = pygame.image.load("Shooter Game/Other Assets/health_box.png").convert_alpha()
+ammo_box_img = pygame.image.load("Shooter Game/Other Assets/ammo_box.png").convert_alpha()
+grenade_box_img = pygame.image.load("Shooter Game/Other Assets/grenade_box.png").convert_alpha()
+
+item_boxes = {
+    "Health": health_box_img,
+    "Ammo": ammo_box_img,
+    "Grenade": grenade_box_img
+}
 
 # Create Sprite Groups
 bullet_group = pygame.sprite.Group()
 grenade_group = pygame.sprite.Group()
+explosion_group = pygame.sprite.Group()
+enemy_group = pygame.sprite.Group()
+item_box_group = pygame.sprite.Group() 
 
 # Initalise Other variables
 running = True
 GRAVITY = 0.75
+TILE_SIZE = 40
+
+
+font = pygame.font.Font("Shooter Game/Other Assets/font2.ttf", 20)
+
+def draw_text(text, font, text_col, x, y):
+    img = font.render(text, True, text_col)
+    screen.blit(img, (x, y))
+
+def draw_bg():
+    screen.fill(BG)
+    pygame.draw.line(screen, RED, (0, 300), (SCREEN_WIDTH, 300))
 
 class Entity(pygame.sprite.Sprite):
     def __init__(self, x, y, scale, velocity, ammo, grenade, char_type):
@@ -159,8 +186,8 @@ class Entity(pygame.sprite.Sprite):
 
     def shoot(self):
         if self.shoot_cooldown == 0 and self.ammo > 0:
-            self.shoot_cooldown = 38
-            bullet = Bullet(self.rect.centerx + (self.rect.size[0]*0.5*self.direction), self.rect.centery-20, self.direction)
+            self.shoot_cooldown = 40
+            bullet = Bullet(self.rect.centerx + (self.rect.size[0]*0.55*self.direction), self.rect.centery-20, self.direction)
             bullet_group.add(bullet)
 
             self.ammo -= 1
@@ -169,10 +196,44 @@ class Entity(pygame.sprite.Sprite):
         # Just draw the image so I don't have to repeat this line of code
         screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
 
+class ItemBox(pygame.sprite.Sprite):
+    def __init__(self, x, y, item_type):
+        # Attributes
+        super().__init__()
+        self.item_type = item_type
+        self.image = item_boxes[self.item_type]
+        self.rect = self.image.get_rect()
+        self.rect.midtop = (x + TILE_SIZE // 2, y + (TILE_SIZE - self.image.get_height()))
+
+    def update(self):
+        if pygame.sprite.collide_rect(self, player):
+            if self.item_type == 'Health':
+                player.health += 25
+                if player.health > player.max_health:
+                    player.health = player.max_health
+            elif self.item_type == 'Ammo':
+                player.ammo += 15
+            elif self.item_type == 'Grenade':
+                player.grenade += 3
+            self.kill()
+
+class HealthBar():
+    def __init__(self, x, y, health, max_health):
+        self.x = x
+        self.y = y
+        self.health = health
+        self.max_health = max_health
+
+    def draw(self, health):
+        self.health = health
+        ratio = self.health / self.max_health
+        pygame.draw.rect(screen, BLACK, (self.x - 2, self.y - 2, 154, 24))
+        pygame.draw.rect(screen, RED, (self.x, self.y, 150, 20))
+        pygame.draw.rect(screen, GREEN, (self.x, self.y, ratio*150, 20))
+
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, direction):
         # Attributes
-
         super().__init__()
         self.velocity = 10
         self.image = bullet_img
@@ -191,12 +252,11 @@ class Bullet(pygame.sprite.Sprite):
             if player.alive:
                 player.health -= 5
                 self.kill()
-
-        if pygame.sprite.spritecollide(enemy, bullet_group, False):
-            if enemy.alive:
-                enemy.health -= 25
-                print(enemy.health)
-                self.kill()
+        for enemy in enemy_group:
+            if pygame.sprite.spritecollide(enemy, bullet_group, False):
+                if enemy.alive:
+                    enemy.health -= 25
+                    self.kill()
 
 class Grenade(pygame.sprite.Sprite):
     def __init__(self, x, y, direction):
@@ -232,37 +292,99 @@ class Grenade(pygame.sprite.Sprite):
         self.timer -= 1
         if self.timer <= 0:
             self.kill()
-            #grenade_thrown = False
+            explosion = Explosion(self.rect.x, self.rect.y)
+            explosion_group.add(explosion)
 
-player = Entity(250, 250, 3, 3, 20, 5, "player")
-enemy = Entity(200, 200, 4, 2, 20, 0, "enemy")
+            # Damaging Entities
+            if abs(self.rect.centerx - player.rect.centerx) < TILE_SIZE * 2 and abs(self.rect.centery - player.rect.centery) < TILE_SIZE * 2:
+                player.health -= 50
+            for enemy in enemy_group:
+                if abs(self.rect.centerx - enemy.rect.centerx) < TILE_SIZE * 2 and abs(self.rect.centery - enemy.rect.centery) < TILE_SIZE * 2:
+                    enemy.health -= 50
+
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        # Attributes
+        super().__init__()
+        self.images = []
+        self.scale = 2
+        for num in range(1, 6):
+            img = pygame.image.load(f"Shooter Game/Explosion/exp{num}.png").convert_alpha()
+            img = pygame.transform.scale(img, (int(img.get_width() * self.scale), int(img.get_width() * self.scale)))
+            self.images.append(img)
+        self.frame_index = 0
+        self.image = self.images[self.frame_index]
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.counter = 0
+
+    def update(self):
+        EXPLOSION_SPEED = 4
+        self.counter += 1
+        if self.counter >= EXPLOSION_SPEED:
+            self.counter = 0
+            self.frame_index += 1
+            if self.frame_index >= len(self.images):
+                self.kill()
+            else:
+                self.image = self.images[self.frame_index]
+
+player = Entity(250, 300, 3, 3, 20, 5, "player")
+health_bar  = HealthBar(10, 10, player.health, player.max_health)
+
+enemy = Entity(200, 250, 4, 2, 20, 0, "enemy")
+enemy_group.add(enemy)
+
+item_box = ItemBox(200, 60, "Health")
+item_box_group.add(item_box)
+item_box2 = ItemBox(300, 60, "Ammo")
+item_box_group.add(item_box2)
+item_box3 = ItemBox(400, 60, "Grenade")
+item_box_group.add(item_box3)
+
 
 while running:
 
     clock.tick(FPS)
 
-    screen.fill(BG)
-    pygame.draw.line(screen, RED, (0, 300), (SCREEN_WIDTH, 300))
+    draw_bg()
 
+    # Drawing Text
+    draw_text("Ammo", font, WHITE, 10, 35)
+    for x in range(player.ammo):
+        screen.blit(bullet_img, (80 + (x * 10), 45))
+    #draw_text(f"Health: {player.health}", font, WHITE, 10, 10)
+    health_bar.draw(player.health)
+    draw_text("Grenades:", font, WHITE, 10, 60)
+    for x in range(player.grenade):
+        screen.blit(grenade_img, (120 + (x * 15), 66))
+
+    #Draw Player & Enemy
     player.update()
     player.draw()
 
-    enemy.update()
-    enemy.draw()
+    for enemy in enemy_group:
+        enemy.update()
+        enemy.draw()
 
-    # Draw Groups
+    # Update Groups
     bullet_group.update()
     grenade_group.update()
+    explosion_group.update()
+    item_box_group.update()
     
+    # Draw Groups
     bullet_group.draw(screen)
     grenade_group.draw(screen)
+    explosion_group.draw(screen)
+    item_box_group.draw(screen)
 
     # Update the player actions and adjust animation appropriately
     if player.alive:
-        if shoot and (not player.in_air):
+        if shoot:
             player.shoot()
             player.update_actions(3)
-        elif grenade and (not player.in_air) and grenade_thrown == False and player.grenade > 0:
+        elif grenade and grenade_thrown == False and player.grenade > 0:
             grenade = Grenade(player.rect.centerx + (player.rect.size[0]*0.3*player.direction), player.rect.top, player.direction)
             grenade_group.add(grenade)
             grenade_thrown = True
