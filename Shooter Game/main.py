@@ -44,6 +44,8 @@ class Entity(pygame.sprite.Sprite):
         self.ammo = ammo
         self.start_ammo = ammo
         self.shoot_cooldown = 0
+        self.health = 100
+        self.max_health = self.health
         self.direction = 1
         self.jump = False
         self.vel_y = 0
@@ -56,7 +58,7 @@ class Entity(pygame.sprite.Sprite):
         self.update_time = pygame.time.get_ticks()
         
         # Loading Images - All Images for Players
-        animation_types = ["Idle", "Run", "Jump", "Shoot Idle", "Shoot Move"]
+        animation_types = ["Idle", "Run", "Jump", "Shoot Idle", "Shoot Move", "Death"]
         for animation in animation_types:
             # Reset temp list of imgs
             temp_list = []
@@ -68,13 +70,14 @@ class Entity(pygame.sprite.Sprite):
             self.animation_list.append(temp_list)
 
         # Get First Frame & Rect
-        # Action 0 = Idle, Action 1 = Walk, Action 2 = Jump
+        # Action 0 = Idle, Action 1 = Run, Action 2 = Jump etc
         self.image = self.animation_list[self.action][self.frame_index]
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
 
     def update(self):
         self.update_animation()
+        self.check_alive()
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
 
@@ -112,7 +115,7 @@ class Entity(pygame.sprite.Sprite):
     
     def update_animation(self):
         # Update Cooldown
-        COOLDOWN = 100
+        COOLDOWN = 150
 
         # Update Image dep on curr frame
         self.image = self.animation_list[self.action][self.frame_index]
@@ -124,7 +127,10 @@ class Entity(pygame.sprite.Sprite):
 
         # If animation done reset:
         if self.frame_index >= len(self.animation_list[self.action]):
-            self.frame_index = 0
+            if self.action == 5:
+                self.frame_index = len(self.animation_list[self.action]) - 1
+            else:
+                self.frame_index = 0
 
     def update_actions(self, new_action):
         if new_action != self.action:
@@ -139,10 +145,17 @@ class Entity(pygame.sprite.Sprite):
                 self.frame_index = 0
                 self.update_time = pygame.time.get_ticks()
     
+    def check_alive(self):
+        if self.health <= 0:
+            self.health = 0
+            self.speed = 0
+            self.alive = False
+            self.update_actions(5)
+
     def shoot(self):
         if self.shoot_cooldown == 0 and self.ammo > 0:
             self.shoot_cooldown = 30
-            bullet = Bullet(self.rect.centerx + (self.rect.size[0]*0.3*self.direction), self.rect.centery-20, self.direction)
+            bullet = Bullet(self.rect.centerx + (self.rect.size[0]*0.5*self.direction), self.rect.centery-20, self.direction)
             bullet_group.add(bullet)
 
             self.ammo -= 1
@@ -168,9 +181,20 @@ class Bullet(pygame.sprite.Sprite):
 
         if self.rect.right < 0 or self.rect.left > SCREEN_WIDTH:
             self.kill()
+        
+        if pygame.sprite.spritecollide(player, bullet_group, False):
+            if player.alive:
+                player.health -= 5
+                self.kill()
+
+        if pygame.sprite.spritecollide(enemy, bullet_group, False):
+            if enemy.alive:
+                enemy.health -= 25
+                print(enemy.health)
+                self.kill()
 
 player = Entity(250, 250, 3, 3, 20, "player")
-enemy = Entity(200, 200, 5, 2, 20, "enemy")
+enemy = Entity(200, 200, 4, 2, 20, "enemy")
 
 while running:
 
