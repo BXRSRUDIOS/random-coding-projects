@@ -192,6 +192,15 @@ class Entity(pygame.sprite.Sprite):
 
             self.ammo -= 1
 
+    def ai(self):
+        if self.alive and player.alive:
+            if self.direction == 1:
+                ai_moving_right = True
+            else:
+                ai_moving_right = False
+            ai_moving_left = not ai_moving_right
+            self.move(ai_moving_left, ai_moving_right)
+
     def draw(self):
         # Just draw the image so I don't have to repeat this line of code
         screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
@@ -329,11 +338,14 @@ class Explosion(pygame.sprite.Sprite):
             else:
                 self.image = self.images[self.frame_index]
 
-player = Entity(250, 300, 3, 3, 20, 5, "player")
+player = Entity(250, 310, 1.65, 3, 20, 5, "player")
 health_bar  = HealthBar(10, 10, player.health, player.max_health)
 
-enemy = Entity(200, 250, 4, 2, 20, 0, "enemy")
+enemy = Entity(200, 250, 1.65, 2, 20, 0, "enemy")
 enemy_group.add(enemy)
+
+enemy2 = Entity(300, 250, 1.65, 2, 20, 0, "enemy")
+enemy_group.add(enemy2)
 
 item_box = ItemBox(200, 60, "Health")
 item_box_group.add(item_box)
@@ -364,6 +376,7 @@ while running:
     player.draw()
 
     for enemy in enemy_group:
+        enemy.ai()
         enemy.update()
         enemy.draw()
 
