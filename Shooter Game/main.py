@@ -1,5 +1,8 @@
 import pygame
 import os
+import random
+import csv
+
 pygame.init()
 
 # Initialise screen
@@ -88,6 +91,12 @@ class Entity(pygame.sprite.Sprite):
         self.action = 0
         self.frame_index = 0
         self.update_time = pygame.time.get_ticks()
+
+        # Other Attributes (mainly for enemy)
+        self.move_counter = 0
+        self.vision = pygame.Rect(0, 0, 150, 20)
+        self.idling = False
+        self.idling_counter = 0
         
         # Loading Images - All Images for Players
         animation_types = ["Idle", "Run", "Jump", "Shoot Idle", "Shoot Move", "Death"]
@@ -146,18 +155,15 @@ class Entity(pygame.sprite.Sprite):
         self.rect.y += dy
     
     def update_animation(self):
-        # Update Cooldown
-        COOLDOWN = 150
-
-        # Update Image dep on curr frame
+        #update animation
+        ANIMATION_COOLDOWN = 100
+		#update image depending on current frame
         self.image = self.animation_list[self.action][self.frame_index]
-
-        # Check if enough time has passed 
-        if pygame.time.get_ticks() - self.update_time > COOLDOWN:
+		#check if enough time has passed since the last update
+        if pygame.time.get_ticks() - self.update_time > ANIMATION_COOLDOWN:
             self.update_time = pygame.time.get_ticks()
             self.frame_index += 1
-
-        # If animation done reset:
+		#if the animation has run out the reset back to the start
         if self.frame_index >= len(self.animation_list[self.action]):
             if self.action == 5:
                 self.frame_index = len(self.animation_list[self.action]) - 1
@@ -168,9 +174,9 @@ class Entity(pygame.sprite.Sprite):
         if new_action != self.action:
             if self.shoot_cooldown > 0:  # Check if the player is shooting
                 if moving_left or moving_right:  # Check if the player is moving
-                    new_action = 4  # Set action to "Shoot Move" (assuming 4 is the index for "Shoot Move")
+                    new_action = 4  # Set action to "Shoot Move"
                 else:
-                    new_action = 3  # Set action to "Shoot Idle" (assuming 3 is the index for "Shoot Idle")
+                    new_action = 3  # Set action to "Shoot Idle"
             self.action = new_action
             # Only reset the frame index if we're not already in the middle of an animation
             if self.frame_index >= len(self.animation_list[self.action]):
@@ -187,20 +193,40 @@ class Entity(pygame.sprite.Sprite):
     def shoot(self):
         if self.shoot_cooldown == 0 and self.ammo > 0:
             self.shoot_cooldown = 40
-            bullet = Bullet(self.rect.centerx + (self.rect.size[0]*0.55*self.direction), self.rect.centery-20, self.direction)
+            bullet = Bullet(self.rect.centerx + (self.rect.size[0]*0.75*self.direction), self.rect.centery-10, self.direction)
             bullet_group.add(bullet)
 
             self.ammo -= 1
 
     def ai(self):
         if self.alive and player.alive:
-            if self.direction == 1:
-                ai_moving_right = True
+            if random.randint(1, 200) == 1 and self.idling == False:
+                self.idling = True
+                self.update_actions(0)
+                self.idling_counter = 75
+            if self.vision.colliderect(player.rect):
+                self.update_actions(0) 
+                self.shoot()
             else:
-                ai_moving_right = False
-            ai_moving_left = not ai_moving_right
-            self.move(ai_moving_left, ai_moving_right)
+                if self.idling == False:
+                    if self.alive and player.alive:
+                        if self.direction == 1:
+                            ai_moving_right = True
+                        else:
+                            ai_moving_right = False
+                        ai_moving_left = not ai_moving_right
+                        self.move(ai_moving_left, ai_moving_right)
+                        self.update_actions(1)
+                        self.move_counter += 1
+                        self.vision.center = (self.rect.centerx + (self.direction * 75), self.rect.centery)
 
+                        if self.move_counter > TILE_SIZE:
+                            self.move_counter *= -1
+                            self.direction *= -1
+                else:
+                    self.idling_counter -= 1
+                    if self.idling_counter <= 0:
+                        self.idling = False
     def draw(self):
         # Just draw the image so I don't have to repeat this line of code
         screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
@@ -341,10 +367,10 @@ class Explosion(pygame.sprite.Sprite):
 player = Entity(250, 310, 1.65, 3, 20, 5, "player")
 health_bar  = HealthBar(10, 10, player.health, player.max_health)
 
-enemy = Entity(200, 250, 1.65, 2, 20, 0, "enemy")
+enemy = Entity(200, 250, 1.65, 1, 20, 0, "enemy")
 enemy_group.add(enemy)
 
-enemy2 = Entity(300, 250, 1.65, 2, 20, 0, "enemy")
+enemy2 = Entity(300, 250, 1.65, 1, 20, 0, "enemy")
 enemy_group.add(enemy2)
 
 item_box = ItemBox(200, 60, "Health")
@@ -439,8 +465,6 @@ while running:
                 shoot = False
             if event.key == pygame.K_e:
                 grenade = False
-	
-    
 
     pygame.display.update()
 
