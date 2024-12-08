@@ -7,6 +7,7 @@ SCREEN_HEIGHT = int(SCREEN_WIDTH * 0.8)
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 GRAVITY = 0.75
+bullet_group = pygame.sprite.Group()
 
 class Entity(pygame.sprite.Sprite):
     def __init__(self, x, y, scale, velocity, char_type):
@@ -39,7 +40,6 @@ class Entity(pygame.sprite.Sprite):
             self.animation_list.append(temp_list)
 
         # Get First Frame & Rect
-        # Action 0 = Idle, Action 1 = Walk, Action 2 = Jump
         self.image = self.animation_list[self.action][self.frame_index]
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
@@ -100,13 +100,17 @@ class Entity(pygame.sprite.Sprite):
             self.frame_index = 0
             self.update_time = pygame.time.get_ticks()
     
+    def shoot(self):
+        bullet = Bullet(self.rect.centerx + (self.rect.size[0]*0.3*self.direction), self.rect.centery, self.direction, bullet.bullet_img)
+        self.bullet_group.add(bullet)
+
     def draw(self):
         # Just draw the image so I don't have to repeat this line of code
         self.update_animation()
         screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, bullet_img, x, y, direction):
+    def __init__(self, x, y, direction, bullet_img):
         # Attributes
 
         super().__init__()
@@ -115,3 +119,10 @@ class Bullet(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         self.direction = direction
+
+    def update(self):
+        # Move bullet
+        self.rect.x += (self.direction * self.velocity)
+
+        if self.rect.right < 0 or self.rect.left > SCREEN_WIDTH:
+            self.kill() 
