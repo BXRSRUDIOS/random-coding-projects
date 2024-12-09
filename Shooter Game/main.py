@@ -43,14 +43,14 @@ running = True
 GRAVITY = 0.75
 SCROLL_THRESH = 200
 level = 1
-MAX_LEVELS = 2
+MAX_LEVELS = 3
 ROWS = 16
 COLS = 150
 TILE_SIZE = SCREEN_HEIGHT // ROWS
 TILE_TYPES = 21
 screen_scroll = 0
 bg_scroll = 0
-level_names = ["Level 1 - Press Space to Shoot, E to Throw Grenades, WAD for Everything Else :)", "Level 2 - What Have You Gotten Yourself Into?"]
+level_names = ["Level 0 - Shhh", "Level 1 - Press Space to Shoot, E to Throw Grenades, WAD for Everything Else :)", "Level 2 - What Have You Gotten Yourself Into?", "Level 3 - I Wouldn't Go Swimming Right Now"]
 
 # Images
 bullet_img = pygame.image.load("Other Assets/bullet.png").convert_alpha()
@@ -211,14 +211,14 @@ class Entity(pygame.sprite.Sprite):
             self.direction = 1
 
         if self.jump == True and self.in_air == False:
-            self.vel_y = -15
+            self.vel_y = -13
             self.jump = False
             self.in_air = True
 
         # Apply Gravity
         self.vel_y += GRAVITY
-        if self.vel_y > 14:
-            self.vel_y = 14
+        if self.vel_y > 12:
+            self.vel_y = 12
         dy += self.vel_y
 
 
@@ -668,7 +668,9 @@ while running:
         world.draw()
         # Drawing Text
         if level <= MAX_LEVELS:
-            draw_text(level_names[level-1], font, RED, 10, 10)
+            draw_text(level_names[level], font, RED, 10, 10)
+        else:
+            running = False
         draw_text("Ammo:", font, WHITE, 10, 60)
         for x in range(player.ammo):
             screen.blit(bullet_img, (80 + (x * 10), 69))
