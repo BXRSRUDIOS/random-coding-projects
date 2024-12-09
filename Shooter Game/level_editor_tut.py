@@ -132,7 +132,7 @@ while run:
 	#save and load data
 	if save_button.draw(screen):
 		#save level data
-		with open(f'level{level}_data.csv', 'w', newline='') as csvfile:
+		with open(f'Levels/level{level}_data.csv', 'w', newline='') as csvfile:
 			writer = csv.writer(csvfile, delimiter = ',')
 			for row in world_data:
 				writer.writerow(row)
