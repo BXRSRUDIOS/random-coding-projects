@@ -19,6 +19,7 @@ moving_right = False
 shoot = False
 grenade = False
 grenade_thrown = False
+start_game = False
 
 # Initialise background
 BG = (144, 44, 120)
@@ -37,6 +38,7 @@ running = True
 GRAVITY = 0.75
 SCROLL_THRESH = 200
 level = 1
+MAX_LEVELS = 2
 ROWS = 16
 COLS = 150
 TILE_SIZE = SCREEN_HEIGHT // ROWS
@@ -54,6 +56,9 @@ pine1_img = pygame.image.load("Shooter Game/background/pine1.png").convert_alpha
 pine2_img = pygame.image.load("Shooter Game/background/pine2.png").convert_alpha()
 mountain_img = pygame.image.load("Shooter Game/background/mountain.png").convert_alpha()
 sky_img = pygame.image.load("Shooter Game/background/sky_cloud.png").convert_alpha()
+start_button_img = pygame.image.load("Shooter Game/Buttons/start_btn.png").convert_alpha()
+restart_button_img = pygame.image.load("Shooter Game/Buttons/restart_btn.png").convert_alpha()
+exit_button_img = pygame.image.load("Shooter Game/Buttons/exit_btn.png").convert_alpha()
 
 # store tiles in a list
 img_list = []
@@ -78,9 +83,10 @@ water_group = pygame.sprite.Group()
 decoration_group = pygame.sprite.Group()
 exit_group = pygame.sprite.Group()
 
-
 font = pygame.font.Font("Shooter Game/Other Assets/font2.ttf", 20)
 
+
+# Helper Functions
 def draw_text(text, font, text_col, x, y):
     img = font.render(text, True, text_col)
     screen.blit(img, (x, y))
@@ -94,6 +100,24 @@ def draw_bg():
         screen.blit(pine1_img, ((i * width) - bg_scroll * 0.7, SCREEN_HEIGHT - pine1_img.get_height() - 150))
         screen.blit(pine2_img, ((i * width) - bg_scroll * 0.8, SCREEN_HEIGHT - pine2_img.get_height()))
 
+def reset_level():
+    enemy_group.empty()
+    bullet_group.empty()
+    grenade_group.empty()
+    explosion_group.empty()
+    item_box_group.empty()
+    decoration_group.empty()
+    water_group.empty()
+    exit_group.empty()
+
+    # Create Empty Tile List
+    data = []
+    for row in range(ROWS):
+        r = [-1] * COLS
+        data.append(r)
+
+    return data
+    
 
 class Entity(pygame.sprite.Sprite):
     def __init__(self, x, y, scale, velocity, ammo, grenade, char_type):
@@ -199,13 +223,26 @@ class Entity(pygame.sprite.Sprite):
         self.rect.x += dx  
         self.rect.y += dy
 
+
+        # check for certain deaths
+        if pygame.sprite.spritecollide(self, water_group, False):
+            self.health = 0
+        
+        if self.rect.bottom > SCREEN_HEIGHT:
+            self.health = 0
+
+        # Check for exit group collision
+        level_complete = False
+        if pygame.sprite.spritecollide(self, exit_group, False):
+            level_complete = True
+
         # Update scroll based on player pos
         if self.char_type == "player":
             if (self.rect.right > SCREEN_WIDTH - SCROLL_THRESH and bg_scroll < (world.level_length * TILE_SIZE) - SCREEN_WIDTH) or (self.rect.left < SCROLL_THRESH and bg_scroll > abs(dx)):
                 self.rect.x -= dx
                 screen_scroll = -dx
 
-        return screen_scroll
+        return screen_scroll, level_complete
 
     
     def update_animation(self):
@@ -517,6 +554,41 @@ class Explosion(pygame.sprite.Sprite):
             else:
                 self.image = self.images[self.frame_index]
 
+class Button():
+	def __init__(self,x, y, image, scale):
+		width = image.get_width()
+		height = image.get_height()
+		self.image = pygame.transform.scale(image, (int(width * scale), int(height * scale)))
+		self.rect = self.image.get_rect()
+		self.rect.topleft = (x, y)
+		self.clicked = False
+
+	def draw(self, surface):
+		action = False
+
+		#get mouse position
+		pos = pygame.mouse.get_pos()
+
+		#check mouseover and clicked conditions
+		if self.rect.collidepoint(pos):
+			if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
+				action = True
+				self.clicked = True
+
+		if pygame.mouse.get_pressed()[0] == 0:
+			self.clicked = False
+
+		#draw button
+		surface.blit(self.image, (self.rect.x, self.rect.y))
+
+		return action
+
+# Create Buttons
+start_button = Button(SCREEN_WIDTH // 2 - 130, SCREEN_HEIGHT // 2 - 150, start_button_img, 1)
+exit_button = Button(SCREEN_WIDTH // 2 - 110, SCREEN_HEIGHT // 2 + 50, exit_button_img, 1)
+restart_button = Button(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 50, restart_button_img, 2)
+
+
 # Creating an empty tile list
 world_data = []
 for row in range(ROWS):
@@ -536,63 +608,102 @@ while running:
 
     clock.tick(FPS)
 
-    draw_bg()
-    world.draw()
-    # Drawing Text
-    draw_text("Ammo", font, WHITE, 10, 35)
-    for x in range(player.ammo):
-        screen.blit(bullet_img, (80 + (x * 10), 45))
-    #draw_text(f"Health: {player.health}", font, WHITE, 10, 10)
-    health_bar.draw(player.health)
-    draw_text("Grenades:", font, WHITE, 10, 60)
-    for x in range(player.grenade):
-        screen.blit(grenade_img, (120 + (x * 15), 66))
+    if start_game == False:
+        screen.fill(BG)
+        if start_button.draw(screen):
+            start_game = True
+        if exit_button.draw(screen):
+            running = False
 
-    #Draw Player & Enemy
-    player.update()
-    player.draw()
+    else:
+        draw_bg()
+        world.draw()
+        # Drawing Text
+        draw_text("Ammo", font, WHITE, 10, 35)
+        for x in range(player.ammo):
+            screen.blit(bullet_img, (80 + (x * 10), 45))
+        #draw_text(f"Health: {player.health}", font, WHITE, 10, 10)
+        health_bar.draw(player.health)
+        draw_text("Grenades:", font, WHITE, 10, 60)
+        for x in range(player.grenade):
+            screen.blit(grenade_img, (120 + (x * 15), 66))
 
-    for enemy in enemy_group:
-        enemy.ai()
-        enemy.update()
-        enemy.draw()
+        #Draw Player & Enemy
+        player.update()
+        player.draw()
 
-    # Update Groups
-    bullet_group.update()
-    grenade_group.update()
-    explosion_group.update()
-    item_box_group.update()
-    decoration_group.update()
-    water_group.update()
-    exit_group.update()
+        for enemy in enemy_group:
+            enemy.ai()
+            enemy.update()
+            enemy.draw()
 
-    # Draw Groups
-    bullet_group.draw(screen)
-    grenade_group.draw(screen)
-    explosion_group.draw(screen)
-    item_box_group.draw(screen)
-    decoration_group.draw(screen)
-    water_group.draw(screen)
-    exit_group.draw(screen)
+        # Update Groups
+        bullet_group.update()
+        grenade_group.update()
+        explosion_group.update()
+        item_box_group.update()
+        decoration_group.update()
+        water_group.update()
+        exit_group.update()
 
-    # Update the player actions and adjust animation appropriately
-    if player.alive:
-        if shoot:
-            player.shoot()
-        elif grenade and grenade_thrown == False and player.grenade > 0:
-            grenade = Grenade(player.rect.centerx + (player.rect.size[0]*0.3*player.direction), player.rect.top, player.direction)
-            grenade_group.add(grenade)
-            grenade_thrown = True
-            player.grenade -= 1
-        if player.in_air:
-            player.update_actions(2)
-        elif moving_left or moving_right:
-            player.update_actions(1)
+        # Draw Groups
+        bullet_group.draw(screen)
+        grenade_group.draw(screen)
+        explosion_group.draw(screen)
+        item_box_group.draw(screen)
+        decoration_group.draw(screen)
+        water_group.draw(screen)
+        exit_group.draw(screen)
+
+        # Update the player actions and adjust animation appropriately
+        if player.alive:
+            if shoot:
+                player.shoot()
+            elif grenade and grenade_thrown == False and player.grenade > 0:
+                grenade = Grenade(player.rect.centerx + (player.rect.size[0]*0.3*player.direction), player.rect.top, player.direction)
+                grenade_group.add(grenade)
+                grenade_thrown = True
+                player.grenade -= 1
+            if player.in_air:
+                player.update_actions(2)
+            elif moving_left or moving_right:
+                player.update_actions(1)
+            else:
+                player.update_actions(0)
+
+            screen_scroll, level_complete = player.move(moving_left, moving_right)
+            bg_scroll -= screen_scroll
+
+            if level_complete:
+                level += 1
+                bg_scroll = 0
+                world_data = reset_level()
+                if level <= MAX_LEVELS:
+                    with open(f"Shooter Game/Levels/level{level}_data.csv", newline="") as map:
+                        reader = csv.reader(map, delimiter=",")
+                        for x, row in enumerate(reader):
+                            for y, tile in enumerate(row):
+                                world_data[x][y] = int(tile)
+
+                    world = World()
+                    player, health_bar = world.process_data(world_data)
+
         else:
-            player.update_actions(0)
+            screen_scroll = 0 
+            for enemy in enemy_group:
+                enemy.update_actions(0)
+            if restart_button.draw(screen):
+                bg_scroll = 0
+                world_data = reset_level()
+                with open(f"Shooter Game/Levels/level{level}_data.csv", newline="") as map:
+                    reader = csv.reader(map, delimiter=",")
+                    for x, row in enumerate(reader):
+                        for y, tile in enumerate(row):
+                            world_data[x][y] = int(tile)
 
-        screen_scroll = player.move(moving_left, moving_right)
-        bg_scroll -= screen_scroll
+                world = World()
+                player, health_bar = world.process_data(world_data)
+                          
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
