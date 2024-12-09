@@ -8,7 +8,7 @@ mixer.init()
 pygame.init()
 
 # Initialise screen
-SCREEN_WIDTH = 800
+SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = int(SCREEN_WIDTH * 0.8)
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -50,7 +50,7 @@ TILE_SIZE = SCREEN_HEIGHT // ROWS
 TILE_TYPES = 21
 screen_scroll = 0
 bg_scroll = 0
-level_names = ["Level 1 - Introduction", "Level 2 - Just Keep Going!"]
+level_names = ["Level 1 - Press Space to Shoot, E to Throw Grenades, WAD for Everything Else :)", "Level 2 - What Have You Gotten Yourself Into?"]
 
 # Images
 bullet_img = pygame.image.load("Shooter Game/Other Assets/bullet.png").convert_alpha()
