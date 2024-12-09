@@ -1,8 +1,10 @@
 import pygame
+from pygame import mixer
 import os
 import random
 import csv
 
+mixer.init()
 pygame.init()
 
 # Initialise screen
@@ -59,6 +61,18 @@ sky_img = pygame.image.load("Shooter Game/background/sky_cloud.png").convert_alp
 start_button_img = pygame.image.load("Shooter Game/Buttons/start_btn.png").convert_alpha()
 restart_button_img = pygame.image.load("Shooter Game/Buttons/restart_btn.png").convert_alpha()
 exit_button_img = pygame.image.load("Shooter Game/Buttons/exit_btn.png").convert_alpha()
+
+# Music and Sounds
+choose_music = ["Shooter Game/audio/Cocoon.mp3", "Shooter Game/audio/lmao what.mp3", "Shooter Game/audio/Bad Thing.mp3", "Shooter Game/audio/Paint.mp3"]
+pygame.mixer.music.load(choose_music[random.randint(0, 3)])
+pygame.mixer.music.set_volume(0.3)
+pygame.mixer.music.play(-1, 0.0, 5000)
+jump_fx = pygame.mixer.Sound("Shooter Game/audio/jump.wav")
+jump_fx.set_volume(0.5)
+shot_fx = pygame.mixer.Sound("Shooter Game/audio/shot.wav")
+shot_fx.set_volume(0.3)
+grenade_fx = pygame.mixer.Sound("Shooter Game/audio/grenade.wav")
+grenade_fx.set_volume(0.3)
 
 # store tiles in a list
 img_list = []
@@ -284,6 +298,7 @@ class Entity(pygame.sprite.Sprite):
             bullet_group.add(bullet)
 
             self.ammo -= 1
+            shot_fx.play()
 
     def ai(self):
         if self.alive and player.alive:
@@ -516,6 +531,7 @@ class Grenade(pygame.sprite.Sprite):
         self.timer -= 1
         if self.timer <= 0:
             self.kill()
+            grenade_fx.play()
             explosion = Explosion(self.rect.x, self.rect.y)
             explosion_group.add(explosion)
 
@@ -715,6 +731,7 @@ while running:
                 moving_right = True
             if event.key == pygame.K_w and player.alive:
                 player.jump = True
+                jump_fx.play()
             if event.key == pygame.K_SPACE:
                 shoot = True
             if event.key == pygame.K_e:
