@@ -42,45 +42,48 @@ running = True
 GRAVITY = 0.75
 SCROLL_THRESH = 200
 level = 1
-MAX_LEVELS = 2
+MAX_LEVELS = 3
 ROWS = 16
 COLS = 150
 TILE_SIZE = SCREEN_HEIGHT // ROWS
 TILE_TYPES = 21
 screen_scroll = 0
 bg_scroll = 0
-level_names = ["Level 1 - Press Space to Shoot, E to Throw Grenades, WAD for Everything Else :)", "Level 2 - What Have You Gotten Yourself Into?"]
+level_names = ["Level 0 - Shhh", "Level 1 - Press Space to Shoot, E to Throw Grenades, WAD for Everything Else :)", "Level 2 - What Have You Gotten Yourself Into?", "Level 3 - I Wouldn't Go Swimming Right Now"]
 
 # Images
-bullet_img = pygame.image.load("Shooter Game/Other Assets/bullet.png").convert_alpha()
-grenade_img = pygame.image.load("Shooter Game/Other Assets/grenade.png").convert_alpha()
-health_box_img = pygame.image.load("Shooter Game/Other Assets/health_box.png").convert_alpha()
-ammo_box_img = pygame.image.load("Shooter Game/Other Assets/ammo_box.png").convert_alpha()
-grenade_box_img = pygame.image.load("Shooter Game/Other Assets/grenade_box.png").convert_alpha()
-pine1_img = pygame.image.load("Shooter Game/background/pine1.png").convert_alpha()
-pine2_img = pygame.image.load("Shooter Game/background/pine2.png").convert_alpha()
-mountain_img = pygame.image.load("Shooter Game/background/mountain.png").convert_alpha()
-sky_img = pygame.image.load("Shooter Game/background/sky_cloud.png").convert_alpha()
-start_button_img = pygame.image.load("Shooter Game/Buttons/start_btn.png").convert_alpha()
-restart_button_img = pygame.image.load("Shooter Game/Buttons/restart_btn.png").convert_alpha()
-exit_button_img = pygame.image.load("Shooter Game/Buttons/exit_btn.png").convert_alpha()
+bullet_img = pygame.image.load("Other Assets/bullet.png").convert_alpha()
+grenade_img = pygame.image.load("Other Assets/grenade.png").convert_alpha()
+health_box_img = pygame.image.load("Other Assets/health_box.png").convert_alpha()
+ammo_box_img = pygame.image.load("Other Assets/ammo_box.png").convert_alpha()
+grenade_box_img = pygame.image.load("Other Assets/grenade_box.png").convert_alpha()
+pine1_img = pygame.image.load("background/pine1.png").convert_alpha()
+pine2_img = pygame.image.load("background/pine2.png").convert_alpha()
+mountain_img = pygame.image.load("background/mountain.png").convert_alpha()
+sky_img = pygame.image.load("background/sky_cloud.png").convert_alpha()
+start_button_img = pygame.image.load("Buttons/start_btn.png").convert_alpha()
+restart_button_img = pygame.image.load("Buttons/restart_btn.png").convert_alpha()
+exit_button_img = pygame.image.load("Buttons/exit_btn.png").convert_alpha()
 
 # Music and Sounds
-choose_music = ["Shooter Game/audio/Cocoon.mp3", "Shooter Game/audio/lmao what.mp3", "Shooter Game/audio/Bad Thing.mp3", "Shooter Game/audio/Paint.mp3"]
+choose_music = ["audio/Cocoon.mp3", 
+"audio/lmao what.mp3",
+"audio/Bad Thing.mp3",
+"audio/Paint.mp3"]
 pygame.mixer.music.load(choose_music[random.randint(0, 3)])
 pygame.mixer.music.set_volume(0.2)
 pygame.mixer.music.play(-1, 0.0, 5000)
-jump_fx = pygame.mixer.Sound("Shooter Game/audio/jump.wav")
+jump_fx = pygame.mixer.Sound("audio/jump.wav")
 jump_fx.set_volume(0.5)
-shot_fx = pygame.mixer.Sound("Shooter Game/audio/shot.wav")
+shot_fx = pygame.mixer.Sound("audio/shot.wav")
 shot_fx.set_volume(0.3)
-grenade_fx = pygame.mixer.Sound("Shooter Game/audio/grenade.wav")
+grenade_fx = pygame.mixer.Sound("audio/grenade.wav")
 grenade_fx.set_volume(0.3)
 
 # store tiles in a list
 img_list = []
 for i in range(TILE_TYPES):
-    img = pygame.image.load(f"Shooter Game/Tiles/{i}.png").convert_alpha()
+    img = pygame.image.load(f"Tiles/{i}.png").convert_alpha()
     img = pygame.transform.scale(img, (TILE_SIZE, TILE_SIZE))
     img_list.append(img)
 
@@ -100,7 +103,7 @@ water_group = pygame.sprite.Group()
 decoration_group = pygame.sprite.Group()
 exit_group = pygame.sprite.Group()
 
-font = pygame.font.Font("Shooter Game/Other Assets/font2.ttf", 20)
+font = pygame.font.Font("Other Assets/font2.ttf", 20)
 
 
 # Helper Functions
@@ -171,9 +174,9 @@ class Entity(pygame.sprite.Sprite):
         for animation in animation_types:
             # Reset temp list of imgs
             temp_list = []
-            num_frames = len(os.listdir(f"Shooter Game/{self.char_type}/{animation}"))
+            num_frames = len(os.listdir(f"{self.char_type}/{animation}"))
             for i in range(num_frames):
-                img = pygame.image.load(f"Shooter Game/{self.char_type}/{animation}/{i}.png").convert_alpha()
+                img = pygame.image.load(f"{self.char_type}/{animation}/{i}.png").convert_alpha()
                 img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_width() * scale)))
                 temp_list.append(img)
             self.animation_list.append(temp_list)
@@ -207,14 +210,14 @@ class Entity(pygame.sprite.Sprite):
             self.direction = 1
 
         if self.jump == True and self.in_air == False:
-            self.vel_y = -15
+            self.vel_y = -13
             self.jump = False
             self.in_air = True
 
         # Apply Gravity
         self.vel_y += GRAVITY
-        if self.vel_y > 14:
-            self.vel_y = 14
+        if self.vel_y > 12:
+            self.vel_y = 12
         dy += self.vel_y
 
 
@@ -552,7 +555,7 @@ class Explosion(pygame.sprite.Sprite):
         self.images = []
         self.scale = 1
         for num in range(1, 6):
-            img = pygame.image.load(f"Shooter Game/Explosion/exp{num}.png").convert_alpha()
+            img = pygame.image.load(f"Explosion/exp{num}.png").convert_alpha()
             img = pygame.transform.scale(img, (int(img.get_width() * self.scale), int(img.get_width() * self.scale)))
             self.images.append(img)
         self.frame_index = 0
@@ -638,7 +641,7 @@ for row in range(ROWS):
     r = [-1] * COLS
     world_data.append(r)
 # Creating the actual world
-with open(f"Shooter Game/Levels/level{level}_data.csv", newline="") as map:
+with open(f"Levels/level{level}_data.csv", newline="") as map:
     reader = csv.reader(map, delimiter=",")
     for x, row in enumerate(reader):
         for y, tile in enumerate(row):
@@ -664,7 +667,9 @@ while running:
         world.draw()
         # Drawing Text
         if level <= MAX_LEVELS:
-            draw_text(level_names[level-1], font, RED, 10, 10)
+            draw_text(level_names[level], font, RED, 10, 10)
+        else:
+            running = False
         draw_text("Ammo:", font, WHITE, 10, 60)
         for x in range(player.ammo):
             screen.blit(bullet_img, (80 + (x * 10), 69))
@@ -730,7 +735,7 @@ while running:
                 bg_scroll = 0
                 world_data = reset_level()
                 if level <= MAX_LEVELS:
-                    with open(f"Shooter Game/Levels/level{level}_data.csv", newline="") as map:
+                    with open(f"Levels/level{level}_data.csv", newline="") as map:
                         reader = csv.reader(map, delimiter=",")
                         for x, row in enumerate(reader):
                             for y, tile in enumerate(row):
@@ -749,7 +754,7 @@ while running:
                     start_intro = True
                     bg_scroll = 0
                     world_data = reset_level()
-                    with open(f"Shooter Game/Levels/level{level}_data.csv", newline="") as map:
+                    with open(f"Levels/level{level}_data.csv", newline="") as map:
                         reader = csv.reader(map, delimiter=",")
                         for x, row in enumerate(reader):
                             for y, tile in enumerate(row):
